@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: manager_library
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Create infra/.env with DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_user -d manager_library"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../test-manager-library-3413974-api
+    working_dir: /var/www/html
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../test-manager-library-3413974-api:/var/www/html
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: manager_library
+      DB_USERNAME: library_user
+      DB_PASSWORD: ${DB_PASSWORD:?Create infra/.env with DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+volumes:
+  postgres_data:
