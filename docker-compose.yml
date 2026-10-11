@@ -1,3 +1,4 @@
+
 services:
   db:
     image: postgres:16
@@ -23,19 +24,45 @@ services:
       - "8000:8000"
     volumes:
       - ../test-manager-library-3413974-api:/var/www/html
+      - api_vendor:/var/www/html/vendor
+      - ./php-performance.ini:/usr/local/etc/php/conf.d/library-performance.ini:ro
     environment:
       APP_ENV: local
-      APP_DEBUG: "true"
+      APP_DEBUG: "false"
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: "5432"
       DB_DATABASE: manager_library
       DB_USERNAME: library_user
       DB_PASSWORD: ${DB_PASSWORD:?Create infra/.env with DB_PASSWORD}
+      LIBRARY_ADMIN_USERNAME: "admin"
+      LIBRARY_ADMIN_PASSWORD: ${LIBRARY_ADMIN_PASSWORD:?Set LIBRARY_ADMIN_PASSWORD in infra/.env}
     depends_on:
       db:
         condition: service_healthy
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/api/v1/health') === '{\"status\":\"ok\"}' ? 0 : 1);"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
 
+  app:
+    image: node:22-alpine
+    working_dir: /app
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../test-manager-library-3413974-app:/app
+      - app_node_modules:/app/node_modules
+    environment:
+      API_PROXY_TARGET: http://api:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      - api
 volumes:
   postgres_data:
+  app_node_modules:
+  api_vendor:

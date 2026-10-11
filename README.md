@@ -1,5 +1,7 @@
 # test-manager-library-3413974-infra
 
+Arranque local verificado: ejecutar `./Start-Library.ps1` desde esta carpeta con Docker Desktop y configuración .env existente. Instrucciones actuales: [RUNBOOK.md](RUNBOOK.md). No cambiar claves ni borrar datos/volúmenes. Servicios: PostgreSQL 16, Laravel 12/PHP 8.4 y React/Vite; app http://localhost:5173, health http://localhost:8000/api/v1/health. Las instrucciones originales siguientes describen el reto inicial y se conservan como contexto histórico.
+
 > **Prueba técnica · Ficha ADSO 3413974**
 > Horario: de **9:15 a. m. a 3:00 p. m.** (15:00). Después, **feria de presentación** de cada proyecto.
 
